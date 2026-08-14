@@ -103,7 +103,13 @@ struct ChartView: View {
                 )
                 .lineStyle(StrokeStyle(lineWidth: 1, dash: [4]))
                 .foregroundStyle(Color.secondary)
-                .annotation(position: .top) {
+                
+                PointMark(
+                    x: .value("Time", selected.timestamp),
+                    y: .value("Download", selected.downloadMbps)
+                )
+                .foregroundStyle(Color.green)
+                .annotation(position: .topTrailing, spacing: 10, overflowResolution: .init(x: .fit(to: .chart), y: .fit(to: .chart))) {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(selected.timestamp.formatted(date: .abbreviated, time: .shortened))
                             .font(.caption2)
@@ -123,12 +129,6 @@ struct ChartView: View {
                     .cornerRadius(8)
                     .shadow(color: .black.opacity(0.2), radius: 4, y: 2)
                 }
-                
-                PointMark(
-                    x: .value("Time", selected.timestamp),
-                    y: .value("Download", selected.downloadMbps)
-                )
-                .foregroundStyle(Color.green)
                 
                 PointMark(
                     x: .value("Time", selected.timestamp),
