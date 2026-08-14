@@ -115,6 +115,8 @@ struct HeatMapView: View {
 
     private var mapContent: some View {
         Map(position: $position) {
+            UserAnnotation()
+            
             ForEach(gridCells) { cell in
                 let displaySpeed = selectedMetric == .download ? cell.avgDownloadMbps : cell.avgUploadMbps
                 
@@ -149,6 +151,11 @@ struct HeatMapView: View {
                     }
                 }
             }
+        }
+        .mapControls {
+            MapUserLocationButton()
+            MapCompass()
+            MapScaleView()
         }
         .mapStyle(.standard(elevation: .flat))
         .overlay(alignment: .top) {
