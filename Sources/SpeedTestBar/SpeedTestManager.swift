@@ -2,14 +2,14 @@ import Foundation
 
 class SpeedTestManager {
     // Cloudflare speed test endpoints (free, no API key, globally distributed)
-    private let downloadURL = URL(string: "https://speed.cloudflare.com/__down?bytes=25000000")! // 25 MB
+    private let downloadURL = URL(string: "https://speed.cloudflare.com/__down?bytes=10000000")! // 10 MB
     private let uploadURL = URL(string: "https://speed.cloudflare.com/__up")!
     private let pingURL = URL(string: "https://speed.cloudflare.com/__down?bytes=0")!
     
     private let session: URLSession = {
         let config = URLSessionConfiguration.ephemeral
-        config.timeoutIntervalForRequest = 60.0
-        config.timeoutIntervalForResource = 60.0
+        config.timeoutIntervalForRequest = 120.0
+        config.timeoutIntervalForResource = 120.0
         config.requestCachePolicy = .reloadIgnoringLocalCacheData
         return URLSession(configuration: config)
     }()
