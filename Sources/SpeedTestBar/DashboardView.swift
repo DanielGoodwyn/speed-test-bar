@@ -1,14 +1,30 @@
 import SwiftUI
 
 struct DashboardView: View {
+    enum DetailMode: String, CaseIterable {
+        case map = "Map"
+        case chart = "Chart"
+    }
+
     @ObservedObject var store: HistoryStore
     var runTestAction: (() -> Void)? = nil
     @StateObject private var filterState = FilterState()
+    @State private var detailMode: DetailMode = .map
     
     var body: some View {
         VStack(spacing: 0) {
             // Top Filter Bar
             HStack {
+                Picker("", selection: $detailMode) {
+                    ForEach(DetailMode.allCases, id: \.self) { mode in
+                        Text(mode.rawValue).tag(mode)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 150)
+                
+                Divider().frame(height: 20).padding(.horizontal, 8)
+                
                 Text("Hour of Day:")
                     .font(.headline)
                 
@@ -65,12 +81,16 @@ struct DashboardView: View {
             
             Divider()
             
-            // Split View for History and Map
+            // Split View for History and Map/Chart
             NavigationSplitView {
                 HistoryView(store: store, filterState: filterState)
                     .navigationSplitViewColumnWidth(min: 250, ideal: 450)
             } detail: {
-                HeatMapView(store: store, filterState: filterState)
+                if detailMode == .map {
+                    HeatMapView(store: store, filterState: filterState)
+                } else {
+                    ChartView(store: store, filterState: filterState)
+                }
             }
         }
     }
