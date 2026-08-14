@@ -5,6 +5,9 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
     private let manager = CLLocationManager()
     private var completion: ((CLLocation?) -> Void)?
     private var timeoutWorkItem: DispatchWorkItem?
+    
+    private let timeouts: [TimeInterval] = [10.0, 20.0, 30.0]
+    private var currentAttempt = 0
 
     override init() {
         super.init()
@@ -25,35 +28,17 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
 
     func requestLocation(completion: @escaping (CLLocation?) -> Void) {
         self.completion = completion
+        self.currentAttempt = 0
 
         let status = manager.authorizationStatus
         print("[LocationManager] Requesting location, auth status: \(status.rawValue)")
-
-        // Safety timeout — if location takes more than 10 seconds, fallback to last known location
-        let timeout = DispatchWorkItem { [weak self] in
-            guard let self = self, self.completion != nil else { return }
-            print("[LocationManager] Timed out waiting for active location update")
-            self.manager.stopUpdatingLocation()
-            
-            if let lastKnown = self.manager.location {
-                print("[LocationManager] Fallback: Using last known location")
-                self.completion?(lastKnown)
-            } else {
-                print("[LocationManager] Fallback: No cached location available")
-                self.completion?(nil)
-            }
-            self.completion = nil
-        }
-        self.timeoutWorkItem = timeout
-        DispatchQueue.main.asyncAfter(deadline: .now() + 10, execute: timeout)
 
         switch status {
         case .notDetermined:
             manager.requestAlwaysAuthorization()
             // Will call locationManagerDidChangeAuthorization after user responds
         case .authorizedAlways, .authorized:
-            // Use startUpdatingLocation instead of requestLocation — more reliable
-            manager.startUpdatingLocation()
+            startAttempt()
         default:
             print("[LocationManager] Not authorized (status \(status.rawValue)), skipping location")
             cancelTimeout()
@@ -62,13 +47,49 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
         }
     }
 
+    private func startAttempt() {
+        cancelTimeout()
+        
+        guard currentAttempt < timeouts.count else {
+            print("[LocationManager] Exhausted all attempts. Falling back.")
+            finishWithFallback()
+            return
+        }
+        
+        let timeoutDuration = timeouts[currentAttempt]
+        print("[LocationManager] Starting attempt \(currentAttempt + 1) with timeout \(timeoutDuration)s")
+        
+        let timeout = DispatchWorkItem { [weak self] in
+            guard let self = self, self.completion != nil else { return }
+            print("[LocationManager] Attempt \(self.currentAttempt + 1) timed out.")
+            self.manager.stopUpdatingLocation()
+            self.currentAttempt += 1
+            self.startAttempt() // Try the next attempt
+        }
+        self.timeoutWorkItem = timeout
+        DispatchQueue.main.asyncAfter(deadline: .now() + timeoutDuration, execute: timeout)
+        
+        manager.startUpdatingLocation()
+    }
+    
+    private func finishWithFallback() {
+        if let lastKnown = manager.location {
+            print("[LocationManager] Fallback: Using last known location")
+            completion?(lastKnown)
+        } else {
+            print("[LocationManager] Fallback: No cached location available")
+            completion?(nil)
+        }
+        completion = nil
+    }
+
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         let status = manager.authorizationStatus
         print("[LocationManager] Auth changed to: \(status.rawValue)")
         if status == .authorizedAlways || status == .authorized {
             // Only request location if we have a pending completion
             if completion != nil {
-                manager.startUpdatingLocation()
+                startAttempt()
             }
         } else if status != .notDetermined {
             cancelTimeout()
@@ -92,15 +113,14 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         print("[LocationManager] Error: \(error.localizedDescription)")
         manager.stopUpdatingLocation()
-        cancelTimeout()
         
-        if let lastKnown = manager.location {
-            print("[LocationManager] Fallback: Using last known location after error")
-            completion?(lastKnown)
+        // If we hit an error, retry if we have attempts left, else fallback
+        currentAttempt += 1
+        if currentAttempt < timeouts.count {
+            startAttempt()
         } else {
-            completion?(nil)
+            finishWithFallback()
         }
-        completion = nil
     }
 
     private func cancelTimeout() {
