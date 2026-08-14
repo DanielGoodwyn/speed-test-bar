@@ -18,10 +18,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.setActivationPolicy(.accessory)
 
         setupStatusItem()
+        locationManager.requestAuthorization()
         startAutoRefresh()
 
         // Run initial speed test after a short delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
             self.runSpeedTest()
         }
     }
