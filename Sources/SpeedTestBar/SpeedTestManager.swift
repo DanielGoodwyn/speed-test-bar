@@ -8,8 +8,8 @@ class SpeedTestManager {
     
     private let session: URLSession = {
         let config = URLSessionConfiguration.ephemeral
-        config.timeoutIntervalForRequest = 20.0
-        config.timeoutIntervalForResource = 30.0
+        config.timeoutIntervalForRequest = 60.0
+        config.timeoutIntervalForResource = 60.0
         config.requestCachePolicy = .reloadIgnoringLocalCacheData
         return URLSession(configuration: config)
     }()
@@ -77,8 +77,8 @@ class SpeedTestManager {
     // MARK: - Upload
 
     private func measureUpload() async throws -> Double {
-        // Generate 5 MB of random-ish data
-        let size = 5_000_000
+        // Generate 2 MB of random-ish data (smaller payload for better reliability on slow connections)
+        let size = 2_000_000
         let payload = Data((0..<size).map { _ in UInt8.random(in: 0...255) })
 
         var request = URLRequest(url: uploadURL)

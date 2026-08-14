@@ -170,11 +170,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                     self.buildMenu() // Refresh menu with latest result
                     self.isTesting = false
                 } catch {
-                    print("[SpeedTest] Error: \(error.localizedDescription)")
+                    print("[SpeedTest] Error: \(error.localizedDescription) - \(error)")
                     self.statusItem.button?.title = "⚠️ Error"
                     self.isTesting = false
-                    // We removed the 30-second retry here so it doesn't get stuck in an error loop.
-                    // It will try again at the next 5-minute interval or when clicked.
                 }
             }
         }
