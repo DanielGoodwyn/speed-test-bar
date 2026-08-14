@@ -5,6 +5,14 @@ class SpeedTestManager {
     private let downloadURL = URL(string: "https://speed.cloudflare.com/__down?bytes=25000000")! // 25 MB
     private let uploadURL = URL(string: "https://speed.cloudflare.com/__up")!
     private let pingURL = URL(string: "https://speed.cloudflare.com/__down?bytes=0")!
+    
+    private let session: URLSession = {
+        let config = URLSessionConfiguration.ephemeral
+        config.timeoutIntervalForRequest = 20.0
+        config.timeoutIntervalForResource = 30.0
+        config.requestCachePolicy = .reloadIgnoringLocalCacheData
+        return URLSession(configuration: config)
+    }()
 
     struct TestResult {
         let downloadMbps: Double
@@ -37,7 +45,7 @@ class SpeedTestManager {
             request.cachePolicy = .reloadIgnoringLocalCacheData
 
             do {
-                let _ = try await URLSession.shared.data(for: request)
+                let _ = try await self.session.data(for: request)
                 let elapsed = (CFAbsoluteTimeGetCurrent() - start) * 1000.0 // ms
                 times.append(elapsed)
             } catch {
@@ -56,7 +64,7 @@ class SpeedTestManager {
         request.cachePolicy = .reloadIgnoringLocalCacheData
 
         let start = CFAbsoluteTimeGetCurrent()
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, _) = try await self.session.data(for: request)
         let elapsed = CFAbsoluteTimeGetCurrent() - start
 
         let bytes = Double(data.count)
@@ -79,7 +87,7 @@ class SpeedTestManager {
         request.setValue("application/octet-stream", forHTTPHeaderField: "Content-Type")
 
         let start = CFAbsoluteTimeGetCurrent()
-        let (_, _) = try await URLSession.shared.upload(for: request, from: payload)
+        let (_, _) = try await self.session.upload(for: request, from: payload)
         let elapsed = CFAbsoluteTimeGetCurrent() - start
 
         let megabits = (Double(size) * 8.0) / 1_000_000.0

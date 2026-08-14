@@ -118,9 +118,28 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Auto Refresh
 
     private func startAutoRefresh() {
-        refreshTimer = Timer.scheduledTimer(withTimeInterval: 300, repeats: true) { [weak self] _ in
+        scheduleNextTest()
+    }
+
+    private func scheduleNextTest() {
+        // Calculate seconds to the next 5-minute boundary (e.g., :00, :05, :10)
+        let calendar = Calendar.current
+        let now = Date()
+        let minutes = calendar.component(.minute, from: now)
+        let seconds = calendar.component(.second, from: now)
+        
+        let minutesToNextBoundary = 5 - (minutes % 5)
+        let secondsToWait = (minutesToNextBoundary * 60) - seconds
+        
+        // Safety check: if it's exactly on the boundary, wait 5 minutes, else wait the calculated time
+        let delay = secondsToWait <= 0 ? 300 : secondsToWait
+        
+        refreshTimer?.invalidate()
+        refreshTimer = Timer.scheduledTimer(withTimeInterval: TimeInterval(delay), repeats: false) { [weak self] _ in
             Task { @MainActor in
                 self?.runSpeedTest()
+                // After running, schedule the next one
+                self?.scheduleNextTest()
             }
         }
     }
@@ -158,11 +177,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                     print("[SpeedTest] Error: \(error.localizedDescription)")
                     self.statusItem.button?.title = "⚠️ Error"
                     self.isTesting = false
-
-                    // Retry after 30 seconds
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 30) {
-                        self.runSpeedTest()
-                    }
+                    // We removed the 30-second retry here so it doesn't get stuck in an error loop.
+                    // It will try again at the next 5-minute interval or when clicked.
                 }
             }
         }
