@@ -233,11 +233,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func formatSpeed(_ mbps: Double) -> String {
         if mbps >= 1000 {
-            return String(format: "%.1f Gbps", mbps / 1000.0)
+            return String(format: "%.1f", mbps / 1000.0) // Technically G, but keeping it numerical
         } else if mbps >= 100 {
-            return String(format: "%.0f Mbps", mbps)
+            return String(format: "%.0f", mbps)
         } else {
-            return String(format: "%.1f Mbps", mbps)
+            return String(format: "%.1f", mbps)
         }
     }
 
