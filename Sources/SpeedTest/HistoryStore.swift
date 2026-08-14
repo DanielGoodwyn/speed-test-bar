@@ -34,6 +34,11 @@ class HistoryStore: ObservableObject {
         save()
     }
 
+    func delete(ids: Set<UUID>) {
+        results.removeAll { ids.contains($0.id) }
+        save()
+    }
+
     private func save() {
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601

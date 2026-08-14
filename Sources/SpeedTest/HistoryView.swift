@@ -125,6 +125,23 @@ struct HistoryView: View {
             }
             .width(min: 80, ideal: 100)
         }
+        .onDeleteCommand {
+            deleteSelected()
+        }
+        .contextMenu {
+            Button(role: .destructive) {
+                deleteSelected()
+            } label: {
+                Label("Delete Selected", systemImage: "trash")
+            }
+            .disabled(filterState.selectedRecordIDs.isEmpty)
+        }
+    }
+
+    private func deleteSelected() {
+        guard !filterState.selectedRecordIDs.isEmpty else { return }
+        store.delete(ids: filterState.selectedRecordIDs)
+        filterState.selectedRecordIDs.removeAll()
     }
 
     private var sortedResults: [SpeedTestResult] {
