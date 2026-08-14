@@ -22,11 +22,11 @@ struct GridCell: Identifiable {
         )
     }
 
-    // ~quarter square mile ≈ ~800m per side
-    static let cellSizeMeters: Double = 800.0
-    // In degrees: ~0.0072° lat, ~0.009° lng at mid-latitudes
-    static let cellSizeLat: Double = 0.0072
-    static let cellSizeLng: Double = 0.0090
+    // ~400m per side (half quarter mile)
+    static let cellSizeMeters: Double = 400.0
+    // In degrees: ~0.0036° lat, ~0.0045° lng at mid-latitudes
+    static let cellSizeLat: Double = 0.0036
+    static let cellSizeLng: Double = 0.0045
 
     static func gridIndex(lat: Double, lng: Double) -> (Int, Int) {
         let latIdx = Int(floor(lat / cellSizeLat))
