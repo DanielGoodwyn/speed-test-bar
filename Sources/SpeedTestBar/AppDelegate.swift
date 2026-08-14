@@ -141,7 +141,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                     )
 
                     self.historyStore.add(record)
-                    self.updateMenuBarTitle(downloadMbps: result.downloadMbps)
+                    self.updateMenuBarTitle(downloadMbps: result.downloadMbps, uploadMbps: result.uploadMbps)
                     self.buildMenu() // Refresh menu with latest result
                     self.isTesting = false
                 } catch {
@@ -158,16 +158,20 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    private func updateMenuBarTitle(downloadMbps: Double) {
-        let display: String
-        if downloadMbps >= 1000 {
-            display = String(format: "↓ %.1f Gbps", downloadMbps / 1000.0)
-        } else if downloadMbps >= 100 {
-            display = String(format: "↓ %.0f Mbps", downloadMbps)
+    private func updateMenuBarTitle(downloadMbps: Double, uploadMbps: Double) {
+        let down = formatSpeed(downloadMbps)
+        let up = formatSpeed(uploadMbps)
+        statusItem.button?.title = "↓ \(down)  ↑ \(up)"
+    }
+
+    private func formatSpeed(_ mbps: Double) -> String {
+        if mbps >= 1000 {
+            return String(format: "%.1f Gbps", mbps / 1000.0)
+        } else if mbps >= 100 {
+            return String(format: "%.0f Mbps", mbps)
         } else {
-            display = String(format: "↓ %.1f Mbps", downloadMbps)
+            return String(format: "%.1f Mbps", mbps)
         }
-        statusItem.button?.title = display
     }
 
     // MARK: - History Window
