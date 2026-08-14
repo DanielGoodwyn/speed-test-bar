@@ -10,6 +10,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private let locationManager = LocationManager()
     private let historyStore = HistoryStore()
     private var historyWindow: NSWindow?
+    private var heatMapWindow: NSWindow?
     private var isTesting = false
 
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -50,6 +51,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let historyItem = NSMenuItem(title: "View History", action: #selector(menuShowHistory), keyEquivalent: "h")
         historyItem.target = self
         menu.addItem(historyItem)
+
+        let heatMapItem = NSMenuItem(title: "View Heat Map", action: #selector(menuShowHeatMap), keyEquivalent: "m")
+        heatMapItem.target = self
+        menu.addItem(heatMapItem)
 
         menu.addItem(NSMenuItem.separator())
 
@@ -99,6 +104,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func menuShowHistory() {
         showHistoryWindow()
+    }
+
+    @objc private func menuShowHeatMap() {
+        showHeatMapWindow()
     }
 
     @objc private func menuQuit() {
@@ -200,6 +209,34 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         NSApp.activate(ignoringOtherApps: true)
         self.historyWindow = window
+    }
+
+    // MARK: - Heat Map Window
+
+    private func showHeatMapWindow() {
+        if let window = heatMapWindow {
+            window.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+
+        let heatMapView = HeatMapView(store: historyStore)
+        let hostingView = NSHostingView(rootView: heatMapView)
+
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 900, height: 650),
+            styleMask: [.titled, .closable, .resizable, .miniaturizable],
+            backing: .buffered,
+            defer: false
+        )
+        window.title = "SpeedTestBar — Heat Map"
+        window.contentView = hostingView
+        window.center()
+        window.isReleasedWhenClosed = false
+        window.makeKeyAndOrderFront(nil)
+
+        NSApp.activate(ignoringOtherApps: true)
+        self.heatMapWindow = window
     }
 
     // MARK: - Helpers
