@@ -151,7 +151,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         isTesting = true
 
         DispatchQueue.main.async {
-            self.statusItem.button?.title = "⏳ Testing..."
+            if let latest = self.historyStore.results.first {
+                let down = self.formatSpeed(latest.downloadMbps)
+                let up = self.formatSpeed(latest.uploadMbps)
+                self.statusItem.button?.title = "⏳ ↓ \(down)  ↑ \(up)"
+            } else {
+                self.statusItem.button?.title = "⏳ Testing..."
+            }
         }
 
         // Fetch location first, then run speed test
