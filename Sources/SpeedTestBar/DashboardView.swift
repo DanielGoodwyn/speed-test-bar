@@ -11,21 +11,37 @@ struct DashboardView: View {
                 Text("Hour of Day:")
                     .font(.headline)
                 
-                Picker("", selection: $filterState.selectedHourBlock) {
-                    Text("All Times").tag(Int?.none)
-                    ForEach(0..<24, id: \.self) { hour in
-                        Text(formatHour(hour)).tag(Int?.some(hour))
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(0..<24, id: \.self) { hour in
+                            let isSelected = filterState.selectedHourBlocks.contains(hour)
+                            Button {
+                                withAnimation {
+                                    if isSelected {
+                                        filterState.selectedHourBlocks.remove(hour)
+                                    } else {
+                                        filterState.selectedHourBlocks.insert(hour)
+                                    }
+                                }
+                            } label: {
+                                Text(formatHour(hour))
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 4)
+                                    .background(isSelected ? Color.accentColor : Color(nsColor: .controlBackgroundColor))
+                                    .foregroundColor(isSelected ? .white : .primary)
+                                    .cornerRadius(12)
+                            }
+                            .buttonStyle(.plain)
+                        }
                     }
                 }
-                .pickerStyle(.menu)
-                .frame(width: 150)
                 
                 Spacer()
                 
-                if filterState.selectedHourBlock != nil || filterState.selectedGridCell != nil || !filterState.selectedRecordIDs.isEmpty {
+                if !filterState.selectedHourBlocks.isEmpty || filterState.selectedGridCell != nil || !filterState.selectedRecordIDs.isEmpty {
                     Button("Clear Filters") {
                         withAnimation {
-                            filterState.selectedHourBlock = nil
+                            filterState.selectedHourBlocks.removeAll()
                             filterState.selectedGridCell = nil
                             filterState.selectedRecordIDs.removeAll()
                         }
@@ -41,7 +57,7 @@ struct DashboardView: View {
             // Split View for History and Map
             NavigationSplitView {
                 HistoryView(store: store, filterState: filterState)
-                    .navigationSplitViewColumnWidth(min: 400, ideal: 550)
+                    .navigationSplitViewColumnWidth(min: 250, ideal: 450)
             } detail: {
                 HeatMapView(store: store, filterState: filterState)
             }

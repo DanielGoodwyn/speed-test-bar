@@ -68,7 +68,6 @@ struct HeatMapView: View {
                 }
             }
         }
-        .frame(minWidth: 700, minHeight: 500)
         .background(Color(nsColor: .windowBackgroundColor))
     }
 
@@ -289,10 +288,10 @@ struct HeatMapView: View {
         let located = store.results.filter { result in
             guard result.latitude != nil && result.longitude != nil else { return false }
             
-            // Filter by Hour
-            if let hourBlock = filterState.selectedHourBlock {
+            // Filter by Hour Blocks
+            if !filterState.selectedHourBlocks.isEmpty {
                 let hour = Calendar.current.component(.hour, from: result.timestamp)
-                if hour != hourBlock { return false }
+                if !filterState.selectedHourBlocks.contains(hour) { return false }
             }
             
             // Filter by Selected Records (if any are selected in the list)

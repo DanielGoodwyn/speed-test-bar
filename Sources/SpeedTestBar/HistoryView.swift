@@ -21,7 +21,6 @@ struct HistoryView: View {
             // Footer
             footerBar
         }
-        .frame(minWidth: 820, minHeight: 500)
         .background(Color(nsColor: .windowBackgroundColor))
     }
 
@@ -120,10 +119,10 @@ struct HistoryView: View {
 
     private var sortedResults: [SpeedTestResult] {
         store.results.filter { result in
-            // Filter by Hour
-            if let hourBlock = filterState.selectedHourBlock {
+            // Filter by Hour Blocks (if any are selected)
+            if !filterState.selectedHourBlocks.isEmpty {
                 let hour = Calendar.current.component(.hour, from: result.timestamp)
-                if hour != hourBlock { return false }
+                if !filterState.selectedHourBlocks.contains(hour) { return false }
             }
             
             // Filter by Map Cell
