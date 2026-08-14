@@ -25,3 +25,21 @@ struct SpeedTestResult: Codable, Identifiable {
         self.longitude = longitude
     }
 }
+
+enum MonitoringMode: Int, CaseIterable {
+    case intense = 120 // 2 minutes
+    case high = 300 // 5 minutes
+    case normal = 3600 // 1 hour
+    case low = 7200 // 2 hours
+    case lowest = 43200 // 12 hours
+    
+    var displayName: String {
+        switch self {
+        case .intense: return "Intense (2m)"
+        case .high: return "High (5m)"
+        case .normal: return "Normal (1h)"
+        case .low: return "Low (2h)"
+        case .lowest: return "Lowest (12h)"
+        }
+    }
+}

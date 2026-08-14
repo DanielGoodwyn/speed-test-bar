@@ -11,6 +11,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private let historyStore = HistoryStore()
     private var dashboardWindow: NSWindow?
     private var isTesting = false
+    
+    private var currentMode: MonitoringMode = {
+        let raw = UserDefaults.standard.integer(forKey: "MonitoringMode")
+        return MonitoringMode(rawValue: raw) ?? .high
+    }()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.regular)
@@ -50,6 +55,20 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let dashboardItem = NSMenuItem(title: "Show Dashboard", action: #selector(menuShowDashboard), keyEquivalent: "d")
         dashboardItem.target = self
         menu.addItem(dashboardItem)
+
+        menu.addItem(NSMenuItem.separator())
+        
+        let modeItem = NSMenuItem(title: "Monitoring Mode", action: nil, keyEquivalent: "")
+        let modeMenu = NSMenu()
+        for mode in MonitoringMode.allCases {
+            let item = NSMenuItem(title: mode.displayName, action: #selector(menuSelectMode(_:)), keyEquivalent: "")
+            item.target = self
+            item.tag = mode.rawValue
+            item.state = mode == currentMode ? .on : .off
+            modeMenu.addItem(item)
+        }
+        modeItem.submenu = modeMenu
+        menu.addItem(modeItem)
 
         menu.addItem(NSMenuItem.separator())
 
@@ -105,6 +124,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.terminate(nil)
     }
 
+    @objc private func menuSelectMode(_ sender: NSMenuItem) {
+        guard let mode = MonitoringMode(rawValue: sender.tag) else { return }
+        setMonitoringMode(mode)
+    }
+
+    func setMonitoringMode(_ mode: MonitoringMode) {
+        guard currentMode != mode else { return }
+        currentMode = mode
+        UserDefaults.standard.set(mode.rawValue, forKey: "MonitoringMode")
+        buildMenu()
+        scheduleNextTest() // Reschedule with new interval
+    }
+
     // MARK: - Auto Refresh
 
     private func startAutoRefresh() {
@@ -112,23 +144,23 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func scheduleNextTest() {
-        // Calculate seconds to the next 5-minute boundary (e.g., :00, :05, :10)
+        let intervalSeconds = currentMode.rawValue
+        
         let calendar = Calendar.current
         let now = Date()
-        let minutes = calendar.component(.minute, from: now)
-        let seconds = calendar.component(.second, from: now)
         
-        let minutesToNextBoundary = 5 - (minutes % 5)
-        let secondsToWait = (minutesToNextBoundary * 60) - seconds
+        let startOfDay = calendar.startOfDay(for: now)
+        let secondsSinceStartOfDay = Int(now.timeIntervalSince(startOfDay))
         
-        // Safety check: if it's exactly on the boundary, wait 5 minutes, else wait the calculated time
-        let delay = secondsToWait <= 0 ? 300 : secondsToWait
+        let nextIntervalBoundary = ((secondsSinceStartOfDay / intervalSeconds) + 1) * intervalSeconds
+        let secondsToWait = nextIntervalBoundary - secondsSinceStartOfDay
+        
+        let delay = secondsToWait <= 0 ? intervalSeconds : secondsToWait
         
         refreshTimer?.invalidate()
         refreshTimer = Timer.scheduledTimer(withTimeInterval: TimeInterval(delay), repeats: false) { [weak self] _ in
             Task { @MainActor in
                 self?.runSpeedTest()
-                // After running, schedule the next one
                 self?.scheduleNextTest()
             }
         }
@@ -218,9 +250,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
-        let dashboardView = DashboardView(store: historyStore) { [weak self] in
-            self?.runSpeedTest()
-        }
+        let dashboardView = DashboardView(
+            store: historyStore,
+            runTestAction: { [weak self] in self?.runSpeedTest() },
+            modeChangeAction: { [weak self] mode in self?.setMonitoringMode(mode) }
+        )
         let hostingView = NSHostingView(rootView: dashboardView)
 
         let window = NSWindow(

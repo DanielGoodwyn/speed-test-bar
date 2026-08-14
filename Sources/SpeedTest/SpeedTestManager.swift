@@ -1,19 +1,6 @@
 import Foundation
 
 class SpeedTestManager {
-    // Cloudflare speed test endpoints (free, no API key, globally distributed)
-    private let downloadURL = URL(string: "https://speed.cloudflare.com/__down?bytes=10000000")! // 10 MB
-    private let uploadURL = URL(string: "https://speed.cloudflare.com/__up")!
-    private let pingURL = URL(string: "https://speed.cloudflare.com/__down?bytes=0")!
-    
-    private let session: URLSession = {
-        let config = URLSessionConfiguration.ephemeral
-        config.timeoutIntervalForRequest = 120.0
-        config.timeoutIntervalForResource = 120.0
-        config.requestCachePolicy = .reloadIgnoringLocalCacheData
-        return URLSession(configuration: config)
-    }()
-
     struct TestResult {
         let downloadMbps: Double
         let uploadMbps: Double
@@ -21,78 +8,36 @@ class SpeedTestManager {
     }
 
     func runTest() async throws -> TestResult {
-        // 1. Ping test (average of 3 tries)
-        let ping = await measurePing(attempts: 3)
+        return try await withCheckedThrowingContinuation { continuation in
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: "/usr/bin/networkQuality")
+            process.arguments = ["-M", "3", "-c"]
 
-        // 2. Download test
-        let download = try await measureDownload()
-
-        // 3. Upload test
-        let upload = try await measureUpload()
-
-        return TestResult(downloadMbps: download, uploadMbps: upload, pingMs: ping)
-    }
-
-    // MARK: - Ping
-
-    private func measurePing(attempts: Int) async -> Double {
-        var times: [Double] = []
-
-        for _ in 0..<attempts {
-            let start = CFAbsoluteTimeGetCurrent()
-            var request = URLRequest(url: pingURL)
-            request.httpMethod = "HEAD"
-            request.cachePolicy = .reloadIgnoringLocalCacheData
+            let pipe = Pipe()
+            process.standardOutput = pipe
 
             do {
-                let _ = try await self.session.data(for: request)
-                let elapsed = (CFAbsoluteTimeGetCurrent() - start) * 1000.0 // ms
-                times.append(elapsed)
+                try process.run()
+                process.waitUntilExit()
+
+                let data = pipe.fileHandleForReading.readDataToEndOfFile()
+                
+                if let json = try JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
+                    let dlThroughputBps = json["dl_throughput"] as? Double ?? 0.0
+                    let ulThroughputBps = json["ul_throughput"] as? Double ?? 0.0
+                    let baseRtt = json["base_rtt"] as? Double ?? 0.0
+
+                    let downloadMbps = dlThroughputBps / 1_000_000.0
+                    let uploadMbps = ulThroughputBps / 1_000_000.0
+
+                    let result = TestResult(downloadMbps: downloadMbps, uploadMbps: uploadMbps, pingMs: baseRtt)
+                    continuation.resume(returning: result)
+                } else {
+                    continuation.resume(throwing: NSError(domain: "SpeedTest", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid JSON format"]))
+                }
             } catch {
-                continue
+                continuation.resume(throwing: error)
             }
         }
-
-        guard !times.isEmpty else { return -1 }
-        return times.reduce(0, +) / Double(times.count)
-    }
-
-    // MARK: - Download
-
-    private func measureDownload() async throws -> Double {
-        var request = URLRequest(url: downloadURL)
-        request.cachePolicy = .reloadIgnoringLocalCacheData
-
-        let start = CFAbsoluteTimeGetCurrent()
-        let (data, _) = try await self.session.data(for: request)
-        let elapsed = CFAbsoluteTimeGetCurrent() - start
-
-        let bytes = Double(data.count)
-        let megabits = (bytes * 8.0) / 1_000_000.0
-        let mbps = megabits / elapsed
-
-        return mbps
-    }
-
-    // MARK: - Upload
-
-    private func measureUpload() async throws -> Double {
-        // Generate 2 MB of random-ish data (smaller payload for better reliability on slow connections)
-        let size = 2_000_000
-        let payload = Data((0..<size).map { _ in UInt8.random(in: 0...255) })
-
-        var request = URLRequest(url: uploadURL)
-        request.httpMethod = "POST"
-        request.cachePolicy = .reloadIgnoringLocalCacheData
-        request.setValue("application/octet-stream", forHTTPHeaderField: "Content-Type")
-
-        let start = CFAbsoluteTimeGetCurrent()
-        let (_, _) = try await self.session.upload(for: request, from: payload)
-        let elapsed = CFAbsoluteTimeGetCurrent() - start
-
-        let megabits = (Double(size) * 8.0) / 1_000_000.0
-        let mbps = megabits / elapsed
-
-        return mbps
     }
 }

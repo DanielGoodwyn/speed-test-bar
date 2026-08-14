@@ -8,8 +8,11 @@ struct DashboardView: View {
 
     @ObservedObject var store: HistoryStore
     var runTestAction: (() -> Void)? = nil
+    var modeChangeAction: ((MonitoringMode) -> Void)? = nil
+    
     @StateObject private var filterState = FilterState()
     @State private var detailMode: DetailMode = .map
+    @AppStorage("MonitoringMode") private var rawMonitoringMode: Int = MonitoringMode.high.rawValue
     
     var body: some View {
         VStack(spacing: 0) {
@@ -65,6 +68,21 @@ struct DashboardView: View {
                     }
                     .buttonStyle(.link)
                     .padding(.trailing, 8)
+                }
+                
+                Divider().frame(height: 20).padding(.horizontal, 4)
+                
+                Picker("", selection: $rawMonitoringMode) {
+                    ForEach(MonitoringMode.allCases, id: \.rawValue) { mode in
+                        Text(mode.displayName).tag(mode.rawValue)
+                    }
+                }
+                .pickerStyle(.menu)
+                .frame(width: 140)
+                .onChange(of: rawMonitoringMode) { old, new in
+                    if let mode = MonitoringMode(rawValue: new) {
+                        modeChangeAction?(mode)
+                    }
                 }
                 
                 if let runTest = runTestAction {
