@@ -9,13 +9,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private let speedTestManager = SpeedTestManager()
     private let locationManager = LocationManager()
     private let historyStore = HistoryStore()
-    private var historyWindow: NSWindow?
-    private var heatMapWindow: NSWindow?
+    private var dashboardWindow: NSWindow?
     private var isTesting = false
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // Hide from dock (LSUIElement behavior)
-        NSApp.setActivationPolicy(.accessory)
+        NSApp.setActivationPolicy(.regular)
 
         setupStatusItem()
         locationManager.requestAuthorization()
@@ -49,13 +47,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         menu.addItem(NSMenuItem.separator())
 
-        let historyItem = NSMenuItem(title: "View History", action: #selector(menuShowHistory), keyEquivalent: "h")
-        historyItem.target = self
-        menu.addItem(historyItem)
-
-        let heatMapItem = NSMenuItem(title: "View Heat Map", action: #selector(menuShowHeatMap), keyEquivalent: "m")
-        heatMapItem.target = self
-        menu.addItem(heatMapItem)
+        let dashboardItem = NSMenuItem(title: "Show Dashboard", action: #selector(menuShowDashboard), keyEquivalent: "d")
+        dashboardItem.target = self
+        menu.addItem(dashboardItem)
 
         menu.addItem(NSMenuItem.separator())
 
@@ -103,12 +97,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         runSpeedTest()
     }
 
-    @objc private func menuShowHistory() {
-        showHistoryWindow()
-    }
-
-    @objc private func menuShowHeatMap() {
-        showHeatMapWindow()
+    @objc private func menuShowDashboard() {
+        showDashboardWindow()
     }
 
     @objc private func menuQuit() {
@@ -206,60 +196,32 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    // MARK: - History Window
+    // MARK: - Dashboard Window
 
-    private func showHistoryWindow() {
-        if let window = historyWindow {
+    private func showDashboardWindow() {
+        if let window = dashboardWindow {
             window.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
             return
         }
 
-        let historyView = HistoryView(store: historyStore)
-        let hostingView = NSHostingView(rootView: historyView)
+        let dashboardView = DashboardView(store: historyStore)
+        let hostingView = NSHostingView(rootView: dashboardView)
 
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 850, height: 550),
+            contentRect: NSRect(x: 0, y: 0, width: 1200, height: 750),
             styleMask: [.titled, .closable, .resizable, .miniaturizable],
             backing: .buffered,
             defer: false
         )
-        window.title = "SpeedTestBar — History"
+        window.title = "SpeedTestBar — Dashboard"
         window.contentView = hostingView
         window.center()
         window.isReleasedWhenClosed = false
         window.makeKeyAndOrderFront(nil)
 
         NSApp.activate(ignoringOtherApps: true)
-        self.historyWindow = window
-    }
-
-    // MARK: - Heat Map Window
-
-    private func showHeatMapWindow() {
-        if let window = heatMapWindow {
-            window.makeKeyAndOrderFront(nil)
-            NSApp.activate(ignoringOtherApps: true)
-            return
-        }
-
-        let heatMapView = HeatMapView(store: historyStore)
-        let hostingView = NSHostingView(rootView: heatMapView)
-
-        let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 900, height: 650),
-            styleMask: [.titled, .closable, .resizable, .miniaturizable],
-            backing: .buffered,
-            defer: false
-        )
-        window.title = "SpeedTestBar — Heat Map"
-        window.contentView = hostingView
-        window.center()
-        window.isReleasedWhenClosed = false
-        window.makeKeyAndOrderFront(nil)
-
-        NSApp.activate(ignoringOtherApps: true)
-        self.heatMapWindow = window
+        self.dashboardWindow = window
     }
 
     // MARK: - Helpers

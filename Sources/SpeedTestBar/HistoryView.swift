@@ -2,8 +2,8 @@ import SwiftUI
 
 struct HistoryView: View {
     @ObservedObject var store: HistoryStore
+    @ObservedObject var filterState: FilterState
     @State private var sortOrder = [KeyPathComparator(\SpeedTestResult.timestamp, order: .reverse)]
-    @State private var selection: SpeedTestResult.ID?
     @State private var showExportAlert = false
 
     var body: some View {
@@ -70,7 +70,7 @@ struct HistoryView: View {
     // MARK: - Table
 
     private var resultTable: some View {
-        Table(sortedResults, selection: $selection, sortOrder: $sortOrder) {
+        Table(sortedResults, selection: $filterState.selectedRecordIDs, sortOrder: $sortOrder) {
             TableColumn("Date & Time", sortUsing: KeyPathComparator(\SpeedTestResult.timestamp, order: .reverse)) { result in
                 Text(result.timestamp, format: .dateTime.month(.abbreviated).day().hour().minute())
                     .font(.system(.body, design: .monospaced))
@@ -119,7 +119,22 @@ struct HistoryView: View {
     }
 
     private var sortedResults: [SpeedTestResult] {
-        store.results.sorted(using: sortOrder)
+        store.results.filter { result in
+            // Filter by Hour
+            if let hourBlock = filterState.selectedHourBlock {
+                let hour = Calendar.current.component(.hour, from: result.timestamp)
+                if hour != hourBlock { return false }
+            }
+            
+            // Filter by Map Cell
+            if let cell = filterState.selectedGridCell {
+                guard let lat = result.latitude, let lng = result.longitude else { return false }
+                let (latIdx, lngIdx) = GridCell.gridIndex(lat: lat, lng: lng)
+                if latIdx != cell.latIndex || lngIdx != cell.lngIndex { return false }
+            }
+            
+            return true
+        }.sorted(using: sortOrder)
     }
 
     // MARK: - Empty State

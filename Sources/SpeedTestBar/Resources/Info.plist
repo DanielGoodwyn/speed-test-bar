@@ -17,7 +17,7 @@
     <key>LSMinimumSystemVersion</key>
     <string>14.0</string>
     <key>LSUIElement</key>
-    <true/>
+    <false/>
     <key>NSLocationWhenInUseUsageDescription</key>
     <string>SpeedTestBar records your location with each speed test so you can compare internet speeds at different places.</string>
     <key>NSLocationUsageDescription</key>

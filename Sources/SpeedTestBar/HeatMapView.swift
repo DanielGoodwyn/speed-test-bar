@@ -50,8 +50,8 @@ struct HeatMapView: View {
     }
 
     @ObservedObject var store: HistoryStore
+    @ObservedObject var filterState: FilterState
     @State private var position: MapCameraPosition = .automatic
-    @State private var selectedCell: GridCell?
     @State private var selectedMetric: MapMetric = .download
 
     var body: some View {
@@ -142,14 +142,18 @@ struct HeatMapView: View {
                     .cornerRadius(6)
                     .shadow(color: .black.opacity(0.3), radius: 3, y: 1)
                     .onTapGesture {
-                        selectedCell = cell
+                        if filterState.selectedGridCell?.id == cell.id {
+                            filterState.selectedGridCell = nil
+                        } else {
+                            filterState.selectedGridCell = cell
+                        }
                     }
                 }
             }
         }
         .mapStyle(.standard(elevation: .flat))
         .overlay(alignment: .top) {
-            if let cell = selectedCell {
+            if let cell = filterState.selectedGridCell {
                 cellDetailCard(cell)
                     .transition(.move(edge: .top).combined(with: .opacity))
             }
@@ -208,7 +212,7 @@ struct HeatMapView: View {
             Spacer()
 
             Button {
-                withAnimation { selectedCell = nil }
+                withAnimation { filterState.selectedGridCell = nil }
             } label: {
                 Image(systemName: "xmark.circle.fill")
                     .foregroundColor(.secondary)
@@ -281,8 +285,24 @@ struct HeatMapView: View {
     // MARK: - Grid Computation
 
     private var gridCells: [GridCell] {
-        // Filter to results that have location data
-        let located = store.results.filter { $0.latitude != nil && $0.longitude != nil }
+        // Filter to results that have location data and match active filters
+        let located = store.results.filter { result in
+            guard result.latitude != nil && result.longitude != nil else { return false }
+            
+            // Filter by Hour
+            if let hourBlock = filterState.selectedHourBlock {
+                let hour = Calendar.current.component(.hour, from: result.timestamp)
+                if hour != hourBlock { return false }
+            }
+            
+            // Filter by Selected Records (if any are selected in the list)
+            if !filterState.selectedRecordIDs.isEmpty {
+                if !filterState.selectedRecordIDs.contains(result.id) { return false }
+            }
+            
+            return true
+        }
+        
         guard !located.isEmpty else { return [] }
 
         // Group by grid cell
