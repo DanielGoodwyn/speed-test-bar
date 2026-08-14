@@ -8,7 +8,7 @@ class HistoryStore: ObservableObject {
 
     init() {
         let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-        let appDir = appSupport.appendingPathComponent("SpeedTestBar", isDirectory: true)
+        let appDir = appSupport.appendingPathComponent("SpeedTest", isDirectory: true)
 
         // Create directory if needed
         try? FileManager.default.createDirectory(at: appDir, withIntermediateDirectories: true)

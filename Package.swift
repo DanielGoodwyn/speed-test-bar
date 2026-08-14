@@ -2,14 +2,14 @@
 import PackageDescription
 
 let package = Package(
-    name: "SpeedTestBar",
+    name: "SpeedTest",
     platforms: [
         .macOS(.v14)
     ],
     targets: [
         .executableTarget(
-            name: "SpeedTestBar",
-            path: "Sources/SpeedTestBar",
+            name: "SpeedTest",
+            path: "Sources/SpeedTest",
             exclude: ["Resources"]
         )
     ]

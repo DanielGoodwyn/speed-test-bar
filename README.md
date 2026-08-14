@@ -1,4 +1,4 @@
-# SpeedTestBar
+# SpeedTest
 
 A native macOS menu bar app that continuously monitors your internet speed and logs results with GPS coordinates.
 
@@ -40,20 +40,20 @@ git clone https://github.com/DanielGoodwyn/speed-test-bar.git
 cd speed-test-bar
 chmod +x build_app.sh
 ./build_app.sh
-open SpeedTestBar.app
+open SpeedTest.app
 ```
 
 ### Install to Applications
 
 ```bash
-cp -r SpeedTestBar.app /Applications/
+cp -r SpeedTest.app /Applications/
 ```
 
 ## How It Works
 
 1. **Speed Test** — Downloads a 25MB file from Cloudflare's speed test CDN and measures throughput. Also runs upload (5MB) and ping tests.
 2. **Location** — Uses CoreLocation to capture your lat/lng at the time of each test. macOS will prompt for location permission on first run.
-3. **Storage** — Results are saved as JSON to `~/Library/Application Support/SpeedTestBar/history.json`
+3. **Storage** — Results are saved as JSON to `~/Library/Application Support/SpeedTest/history.json`
 
 ## Menu Bar
 

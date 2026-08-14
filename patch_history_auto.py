@@ -1,7 +1,7 @@
 import json
 import os
 
-history_path = os.path.expanduser("~/Library/Application Support/SpeedTestBar/history.json")
+history_path = os.path.expanduser("~/Library/Application Support/SpeedTest/history.json")
 
 with open(history_path, 'r') as f:
     data = json.load(f)

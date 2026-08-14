@@ -4,7 +4,7 @@
 
 set -e
 
-APP_NAME="SpeedTestBar"
+APP_NAME="SpeedTest"
 BUILD_DIR=".build/debug"
 APP_BUNDLE="$APP_NAME.app"
 

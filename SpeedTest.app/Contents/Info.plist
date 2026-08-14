@@ -3,11 +3,13 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleName</key>
-    <string>SpeedTestBar</string>
+    <string>SpeedTest</string>
     <key>CFBundleDisplayName</key>
-    <string>SpeedTestBar</string>
+    <string>SpeedTest</string>
+    <key>CFBundleExecutable</key>
+    <string>SpeedTest</string>
     <key>CFBundleIdentifier</key>
-    <string>com.danielgoodwyn.SpeedTestBar</string>
+    <string>com.danielgoodwyn.SpeedTest</string>
     <key>CFBundleVersion</key>
     <string>1.0</string>
     <key>CFBundleShortVersionString</key>
@@ -21,12 +23,12 @@
     <key>LSUIElement</key>
     <false/>
     <key>NSLocationWhenInUseUsageDescription</key>
-    <string>SpeedTestBar records your location with each speed test so you can compare internet speeds at different places.</string>
+    <string>SpeedTest records your location with each speed test so you can compare internet speeds at different places.</string>
     <key>NSLocationUsageDescription</key>
-    <string>SpeedTestBar records your location with each speed test so you can compare internet speeds at different places.</string>
+    <string>SpeedTest records your location with each speed test so you can compare internet speeds at different places.</string>
     <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-    <string>SpeedTestBar records your location with each speed test so you can compare internet speeds at different places.</string>
+    <string>SpeedTest records your location with each speed test so you can compare internet speeds at different places.</string>
     <key>NSLocationAlwaysUsageDescription</key>
-    <string>SpeedTestBar records your location with each speed test so you can compare internet speeds at different places.</string>
+    <string>SpeedTest records your location with each speed test so you can compare internet speeds at different places.</string>
 </dict>
 </plist>

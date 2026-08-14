@@ -84,7 +84,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             menu.addItem(NSMenuItem.separator())
         }
 
-        let quitItem = NSMenuItem(title: "Quit SpeedTestBar", action: #selector(menuQuit), keyEquivalent: "q")
+        let quitItem = NSMenuItem(title: "Quit SpeedTest", action: #selector(menuQuit), keyEquivalent: "q")
         quitItem.target = self
         menu.addItem(quitItem)
 
@@ -229,7 +229,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             backing: .buffered,
             defer: false
         )
-        window.title = "SpeedTestBar — Dashboard"
+        window.title = "SpeedTest — Dashboard"
         window.contentView = hostingView
         window.center()
         window.isReleasedWhenClosed = false
