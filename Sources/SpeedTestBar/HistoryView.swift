@@ -38,10 +38,17 @@ struct HistoryView: View {
             Spacer()
 
             if let latest = store.results.first {
-                HStack(spacing: 16) {
-                    statBadge(icon: "arrow.down.circle.fill", value: String(format: "%.1f", latest.downloadMbps), unit: "Mbps", color: speedColor(latest.downloadMbps))
-                    statBadge(icon: "arrow.up.circle.fill", value: String(format: "%.1f", latest.uploadMbps), unit: "Mbps", color: .blue)
-                    statBadge(icon: "bolt.circle.fill", value: String(format: "%.0f", latest.pingMs), unit: "ms", color: .orange)
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 16) {
+                        statBadge(icon: "arrow.down.circle.fill", value: String(format: "%.1f", latest.downloadMbps), unit: "Mbps", color: speedColor(latest.downloadMbps))
+                        statBadge(icon: "arrow.up.circle.fill", value: String(format: "%.1f", latest.uploadMbps), unit: "Mbps", color: .blue)
+                        statBadge(icon: "bolt.circle.fill", value: String(format: "%.0f", latest.pingMs), unit: "ms", color: .orange)
+                    }
+                    VStack(alignment: .trailing, spacing: 8) {
+                        statBadge(icon: "arrow.down.circle.fill", value: String(format: "%.1f", latest.downloadMbps), unit: "Mbps", color: speedColor(latest.downloadMbps))
+                        statBadge(icon: "arrow.up.circle.fill", value: String(format: "%.1f", latest.uploadMbps), unit: "Mbps", color: .blue)
+                        statBadge(icon: "bolt.circle.fill", value: String(format: "%.0f", latest.pingMs), unit: "ms", color: .orange)
+                    }
                 }
             }
         }
@@ -56,10 +63,13 @@ struct HistoryView: View {
                 .foregroundColor(color)
             Text(value)
                 .font(.system(.body, design: .rounded).bold())
+                .lineLimit(1)
             Text(unit)
                 .font(.caption)
                 .foregroundColor(.secondary)
+                .lineLimit(1)
         }
+        .fixedSize(horizontal: true, vertical: false)
         .padding(.horizontal, 10)
         .padding(.vertical, 5)
         .background(color.opacity(0.1))
