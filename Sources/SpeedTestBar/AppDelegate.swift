@@ -170,8 +170,23 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                     self.buildMenu() // Refresh menu with latest result
                     self.isTesting = false
                 } catch {
-                    print("[SpeedTest] Error: \(error.localizedDescription) - \(error)")
-                    self.statusItem.button?.title = "⚠️ Error"
+                    let errStr = "Date: \(Date())\nError: \(error.localizedDescription)\nFull: \(error)\n\n"
+                    let debugURL = URL(fileURLWithPath: "/tmp/speedtest_debug.log")
+                    if let data = errStr.data(using: .utf8) {
+                        if let fileHandle = try? FileHandle(forWritingTo: debugURL) {
+                            fileHandle.seekToEndOfFile()
+                            fileHandle.write(data)
+                            fileHandle.closeFile()
+                        } else {
+                            try? data.write(to: debugURL)
+                        }
+                    }
+                    
+                    if let latest = self.historyStore.results.first {
+                        self.updateMenuBarTitle(downloadMbps: latest.downloadMbps, uploadMbps: latest.uploadMbps)
+                    } else {
+                        self.statusItem.button?.title = "⚠️ Offline"
+                    }
                     self.isTesting = false
                 }
             }
