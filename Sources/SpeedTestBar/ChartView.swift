@@ -4,6 +4,7 @@ import Charts
 struct ChartView: View {
     @ObservedObject var store: HistoryStore
     @ObservedObject var filterState: FilterState
+    @State private var selectedDate: Date?
     
     var body: some View {
         VStack(spacing: 0) {
@@ -55,45 +56,88 @@ struct ChartView: View {
     // MARK: - Chart Content
     
     private var chartContent: some View {
-        Chart(filteredResults) { result in
-            // Download Line
-            LineMark(
-                x: .value("Time", result.timestamp),
-                y: .value("Download", result.downloadMbps),
-                series: .value("Type", "Download")
-            )
-            .foregroundStyle(Color.green)
-            .interpolationMethod(.catmullRom)
+        Chart {
+            ForEach(filteredResults) { result in
+                // Download Line
+                LineMark(
+                    x: .value("Time", result.timestamp),
+                    y: .value("Download", result.downloadMbps),
+                    series: .value("Type", "Download")
+                )
+                .foregroundStyle(Color.green)
+                .interpolationMethod(.catmullRom)
+                
+                AreaMark(
+                    x: .value("Time", result.timestamp),
+                    y: .value("Download", result.downloadMbps),
+                    series: .value("Type", "Download")
+                )
+                .foregroundStyle(
+                    Gradient(colors: [Color.green.opacity(0.3), Color.green.opacity(0.0)])
+                )
+                .interpolationMethod(.catmullRom)
+                
+                // Upload Line
+                LineMark(
+                    x: .value("Time", result.timestamp),
+                    y: .value("Upload", result.uploadMbps),
+                    series: .value("Type", "Upload")
+                )
+                .foregroundStyle(Color.blue)
+                .interpolationMethod(.catmullRom)
+                
+                AreaMark(
+                    x: .value("Time", result.timestamp),
+                    y: .value("Upload", result.uploadMbps),
+                    series: .value("Type", "Upload")
+                )
+                .foregroundStyle(
+                    Gradient(colors: [Color.blue.opacity(0.3), Color.blue.opacity(0.0)])
+                )
+                .interpolationMethod(.catmullRom)
+            }
             
-            AreaMark(
-                x: .value("Time", result.timestamp),
-                y: .value("Download", result.downloadMbps),
-                series: .value("Type", "Download")
-            )
-            .foregroundStyle(
-                Gradient(colors: [Color.green.opacity(0.3), Color.green.opacity(0.0)])
-            )
-            .interpolationMethod(.catmullRom)
-            
-            // Upload Line
-            LineMark(
-                x: .value("Time", result.timestamp),
-                y: .value("Upload", result.uploadMbps),
-                series: .value("Type", "Upload")
-            )
-            .foregroundStyle(Color.blue)
-            .interpolationMethod(.catmullRom)
-            
-            AreaMark(
-                x: .value("Time", result.timestamp),
-                y: .value("Upload", result.uploadMbps),
-                series: .value("Type", "Upload")
-            )
-            .foregroundStyle(
-                Gradient(colors: [Color.blue.opacity(0.3), Color.blue.opacity(0.0)])
-            )
-            .interpolationMethod(.catmullRom)
+            if let selected = selectedResult {
+                RuleMark(
+                    x: .value("Selected", selected.timestamp)
+                )
+                .lineStyle(StrokeStyle(lineWidth: 1, dash: [4]))
+                .foregroundStyle(Color.secondary)
+                .annotation(position: .top) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(selected.timestamp.formatted(date: .abbreviated, time: .shortened))
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                        Text(String(format: "↓ %.1f Mbps", selected.downloadMbps))
+                            .font(.caption.bold())
+                            .foregroundColor(speedColor(selected.downloadMbps))
+                        Text(String(format: "↑ %.1f Mbps", selected.uploadMbps))
+                            .font(.caption.bold())
+                            .foregroundColor(.blue)
+                        Text(String(format: "⚡ %.0f ms", selected.pingMs))
+                            .font(.caption.bold())
+                            .foregroundColor(.orange)
+                    }
+                    .padding(8)
+                    .background(.ultraThinMaterial)
+                    .cornerRadius(8)
+                    .shadow(color: .black.opacity(0.2), radius: 4, y: 2)
+                }
+                
+                PointMark(
+                    x: .value("Time", selected.timestamp),
+                    y: .value("Download", selected.downloadMbps)
+                )
+                .foregroundStyle(Color.green)
+                
+                PointMark(
+                    x: .value("Time", selected.timestamp),
+                    y: .value("Upload", selected.uploadMbps)
+                )
+                .foregroundStyle(Color.blue)
+            }
         }
+        .chartXSelection(value: $selectedDate)
         .chartXAxis {
             AxisMarks(values: .automatic) { _ in
                 AxisGridLine()
@@ -154,6 +198,11 @@ struct ChartView: View {
             return true
         }
         .sorted(by: { $0.timestamp < $1.timestamp }) // Charts need chronological data
+    }
+    
+    private var selectedResult: SpeedTestResult? {
+        guard let date = selectedDate else { return nil }
+        return filteredResults.min(by: { abs($0.timestamp.timeIntervalSince(date)) < abs($1.timestamp.timeIntervalSince(date)) })
     }
     
     // MARK: - Helpers
