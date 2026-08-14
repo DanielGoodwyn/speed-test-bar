@@ -22,6 +22,10 @@ cp "$BUILD_DIR/$APP_NAME" "$APP_BUNDLE/Contents/MacOS/$APP_NAME"
 # Copy Info.plist
 cp "Sources/$APP_NAME/Resources/Info.plist" "$APP_BUNDLE/Contents/Info.plist"
 
+# Ad-hoc code sign (required for CoreLocation permissions on modern macOS)
+echo "🔏 Code signing..."
+codesign --force --deep --sign - "$APP_BUNDLE"
+
 echo "✅ Created $APP_BUNDLE"
 echo ""
 echo "To run:  open $APP_BUNDLE"

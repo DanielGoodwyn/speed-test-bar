@@ -22,5 +22,9 @@
     <string>SpeedTestBar records your location with each speed test so you can compare internet speeds at different places.</string>
     <key>NSLocationUsageDescription</key>
     <string>SpeedTestBar records your location with each speed test so you can compare internet speeds at different places.</string>
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>SpeedTestBar records your location with each speed test so you can compare internet speeds at different places.</string>
+    <key>NSLocationAlwaysUsageDescription</key>
+    <string>SpeedTestBar records your location with each speed test so you can compare internet speeds at different places.</string>
 </dict>
 </plist>
