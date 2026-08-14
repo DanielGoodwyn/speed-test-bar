@@ -29,12 +29,19 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
         let status = manager.authorizationStatus
         print("[LocationManager] Requesting location, auth status: \(status.rawValue)")
 
-        // Safety timeout — if location takes more than 10 seconds, continue without it
+        // Safety timeout — if location takes more than 10 seconds, fallback to last known location
         let timeout = DispatchWorkItem { [weak self] in
             guard let self = self, self.completion != nil else { return }
-            print("[LocationManager] Timed out waiting for location")
+            print("[LocationManager] Timed out waiting for active location update")
             self.manager.stopUpdatingLocation()
-            self.completion?(nil)
+            
+            if let lastKnown = self.manager.location {
+                print("[LocationManager] Fallback: Using last known location")
+                self.completion?(lastKnown)
+            } else {
+                print("[LocationManager] Fallback: No cached location available")
+                self.completion?(nil)
+            }
             self.completion = nil
         }
         self.timeoutWorkItem = timeout
@@ -86,7 +93,13 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
         print("[LocationManager] Error: \(error.localizedDescription)")
         manager.stopUpdatingLocation()
         cancelTimeout()
-        completion?(nil)
+        
+        if let lastKnown = manager.location {
+            print("[LocationManager] Fallback: Using last known location after error")
+            completion?(lastKnown)
+        } else {
+            completion?(nil)
+        }
         completion = nil
     }
 
