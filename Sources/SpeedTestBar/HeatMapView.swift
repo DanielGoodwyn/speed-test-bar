@@ -44,9 +44,15 @@ struct GridCell: Identifiable {
 // MARK: - Heat Map View
 
 struct HeatMapView: View {
+    enum MapMetric: String, CaseIterable {
+        case download = "Download"
+        case upload = "Upload"
+    }
+
     @ObservedObject var store: HistoryStore
     @State private var position: MapCameraPosition = .automatic
     @State private var selectedCell: GridCell?
+    @State private var selectedMetric: MapMetric = .download
 
     var body: some View {
         VStack(spacing: 0) {
@@ -77,6 +83,15 @@ struct HeatMapView: View {
             Text("Speed Heat Map")
                 .font(.title2.bold())
 
+            Picker("", selection: $selectedMetric) {
+                ForEach(MapMetric.allCases, id: \.self) { metric in
+                    Text(metric.rawValue).tag(metric)
+                }
+            }
+            .pickerStyle(.segmented)
+            .frame(width: 160)
+            .padding(.leading, 16)
+
             Spacer()
 
             if !gridCells.isEmpty {
@@ -102,14 +117,16 @@ struct HeatMapView: View {
     private var mapContent: some View {
         Map(position: $position) {
             ForEach(gridCells) { cell in
+                let displaySpeed = selectedMetric == .download ? cell.avgDownloadMbps : cell.avgUploadMbps
+                
                 MapPolygon(coordinates: cellCorners(cell))
-                    .foregroundStyle(speedColor(cell.avgDownloadMbps).opacity(0.45))
-                    .stroke(speedColor(cell.avgDownloadMbps), lineWidth: 1.5)
+                    .foregroundStyle(speedColor(displaySpeed).opacity(0.45))
+                    .stroke(speedColor(displaySpeed), lineWidth: 1.5)
 
                 // Center annotation with speed label
                 Annotation("", coordinate: CLLocationCoordinate2D(latitude: cell.centerLat, longitude: cell.centerLng)) {
                     VStack(spacing: 1) {
-                        Text(String(format: "%.0f", cell.avgDownloadMbps))
+                        Text(String(format: "%.0f", displaySpeed))
                             .font(.system(size: 13, weight: .bold, design: .rounded))
                             .foregroundColor(.white)
                         Text("Mbps")
@@ -121,7 +138,7 @@ struct HeatMapView: View {
                     }
                     .padding(.horizontal, 6)
                     .padding(.vertical, 4)
-                    .background(speedColor(cell.avgDownloadMbps).opacity(0.85))
+                    .background(speedColor(displaySpeed).opacity(0.85))
                     .cornerRadius(6)
                     .shadow(color: .black.opacity(0.3), radius: 3, y: 1)
                     .onTapGesture {
@@ -210,7 +227,7 @@ struct HeatMapView: View {
 
     private var legendOverlay: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text("Download Speed")
+            Text("\(selectedMetric.rawValue) Speed")
                 .font(.caption2.bold())
                 .foregroundColor(.secondary)
 
