@@ -205,7 +205,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
-        let dashboardView = DashboardView(store: historyStore)
+        let dashboardView = DashboardView(store: historyStore) { [weak self] in
+            self?.runSpeedTest()
+        }
         let hostingView = NSHostingView(rootView: dashboardView)
 
         let window = NSWindow(

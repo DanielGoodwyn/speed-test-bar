@@ -2,6 +2,7 @@ import SwiftUI
 
 struct DashboardView: View {
     @ObservedObject var store: HistoryStore
+    var runTestAction: (() -> Void)? = nil
     @StateObject private var filterState = FilterState()
     
     var body: some View {
@@ -47,6 +48,16 @@ struct DashboardView: View {
                         }
                     }
                     .buttonStyle(.link)
+                    .padding(.trailing, 8)
+                }
+                
+                if let runTest = runTestAction {
+                    Button {
+                        runTest()
+                    } label: {
+                        Label("Run Speed Test", systemImage: "play.circle.fill")
+                    }
+                    .buttonStyle(.borderedProminent)
                 }
             }
             .padding()
