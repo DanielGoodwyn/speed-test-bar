@@ -7,11 +7,11 @@ class SpeedTestManager {
         let pingMs: Double
     }
 
-    func runTest() async throws -> TestResult {
+    func runTest(duration: Int) async throws -> TestResult {
         return try await withCheckedThrowingContinuation { continuation in
             let process = Process()
             process.executableURL = URL(fileURLWithPath: "/usr/bin/networkQuality")
-            process.arguments = ["-M", "3", "-c"]
+            process.arguments = ["-M", "\(duration)", "-c"]
 
             let pipe = Pipe()
             process.standardOutput = pipe

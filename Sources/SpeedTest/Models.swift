@@ -42,4 +42,14 @@ enum MonitoringMode: Int, CaseIterable {
         case .lowest: return "Lowest (12h)"
         }
     }
+    
+    var testDuration: Int {
+        switch self {
+        case .intense: return 3
+        case .high: return 5
+        case .normal: return 8
+        case .low: return 10
+        case .lowest: return 15
+        }
+    }
 }

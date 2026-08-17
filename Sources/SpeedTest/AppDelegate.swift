@@ -188,7 +188,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
             Task { @MainActor in
                 do {
-                    let result = try await self.speedTestManager.runTest()
+                    let duration = self.currentMode.testDuration
+                    let result = try await self.speedTestManager.runTest(duration: duration)
                     let record = SpeedTestResult(
                         downloadMbps: result.downloadMbps,
                         uploadMbps: result.uploadMbps,
@@ -203,16 +204,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                     self.isTesting = false
                 } catch {
                     let errStr = "Date: \(Date())\nError: \(error.localizedDescription)\nFull: \(error)\n\n"
-                    let debugURL = URL(fileURLWithPath: "/tmp/speedtest_debug.log")
-                    if let data = errStr.data(using: .utf8) {
-                        if let fileHandle = try? FileHandle(forWritingTo: debugURL) {
-                            fileHandle.seekToEndOfFile()
-                            fileHandle.write(data)
-                            fileHandle.closeFile()
-                        } else {
-                            try? data.write(to: debugURL)
-                        }
-                    }
+                    print(errStr)
                     
                     if let latest = self.historyStore.results.first {
                         self.updateMenuBarTitle(downloadMbps: latest.downloadMbps, uploadMbps: latest.uploadMbps)
